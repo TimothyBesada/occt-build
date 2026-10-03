@@ -32,12 +32,14 @@ Targets are named by their Rust target triple. Each archive holds a single direc
 
 ```
 occt-8.0.1-<config hash>-<target>/
-  manifest.json            the build manifest (below)
-  include/opencascade/     the headers; Standard_Version.hxx reports 8.0.1
-  lib/                     libTK*.so / libTK*.dylib, with their version symlinks
-  lib/cmake/opencascade/   OCCT's CMake package files
-  share/doc/opencascade/   LICENSE_LGPL_21.txt, OCCT_LGPL_EXCEPTION.txt
-  share/occt-build/        build.sh
+  manifest.json                  the build manifest (below)
+  include/opencascade/           the headers; Standard_Version.hxx reports 8.0.1
+  lib/                           libTK*.so / libTK*.dylib, with their version symlinks
+  lib/cmake/opencascade/         OCCT's CMake package files
+  bin/                           OCCT's environment scripts (env.sh, custom.sh)
+  share/opencascade/resources/   OCCT's resource files
+  share/doc/opencascade/         LICENSE_LGPL_21.txt, OCCT_LGPL_EXCEPTION.txt
+  share/occt-build/              build.sh
 ```
 
 To install one into a prefix:

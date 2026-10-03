@@ -48,7 +48,7 @@ HEADERS = [
     "BRepPrimAPI_MakeBox.hxx",       # TKPrim
     "BRepMesh_IncrementalMesh.hxx",  # TKMesh
     "BRepAlgoAPI_Fuse.hxx",          # TKBO
-    "BRepAlgo_Section.hxx",          # TKBool
+    "BRepFill_Filling.hxx",          # TKBool
     "BRepFilletAPI_MakeFillet.hxx",  # TKFillet
     "BRepOffsetAPI_MakeThickSolid.hxx",  # TKOffset
     "BRepFeat_MakePrism.hxx",        # TKFeat
@@ -181,9 +181,10 @@ def check_manifest(prefix, os_name, target, values, config, archive):
     check(get("target") == target, f"target is {get('target')!r}, expected {target}")
     check(get("config") == config, "config differs from build.sh --config")
     check(get("config_hash") == config_hash, f"config_hash is {get('config_hash')!r}, expected {config_hash}")
-    for key in ("id", "version", "description"):
-        check(isinstance(get("compiler", key), str) and get("compiler", key),
-              f"compiler.{key} is missing")
+    for compiler in ("compiler", "c_compiler"):
+        for key in ("id", "version", "description"):
+            check(isinstance(get(compiler, key), str) and get(compiler, key),
+                  f"{compiler}.{key} is missing")
     for key in ("cflags", "cxxflags"):
         check("-ffp-contract=off" in str(get("flags", key)), f"flags.{key} lacks -ffp-contract=off")
     check(get("flags", "cmake") == options, "flags.cmake differs from the config's options")
@@ -192,7 +193,7 @@ def check_manifest(prefix, os_name, target, values, config, archive):
         name = f"occt-{values['VERSION']}-{config_hash}-{target}.tar.gz"
         check(archive.name == name, f"the archive is named {archive.name}, expected {name}")
     print(f"  occt {get('occt', 'version')} {get('occt', 'commit')}, config hash {get('config_hash')}")
-    print(f"  compiler {get('compiler', 'id')} {get('compiler', 'version')}")
+    print(f"  compiler {get('compiler', 'description')}")
 
 
 def _dig(value, keys):
@@ -237,7 +238,7 @@ def check_linkage_macos(real, config):
         commands = run(["otool", "-l", str(path)])
         rpaths = re.findall(r"cmd LC_RPATH\n\s+cmdsize \d+\n\s+path (.*) \(offset \d+\)", commands)
         check(rpaths == ["@loader_path"], f"{path.name}: LC_RPATH is {rpaths}, expected ['@loader_path']")
-        found = re.findall(r"cmd LC_BUILD_VERSION\n\s+cmdsize \d+\n\s+platform \d+\n\s+minos (\S+)", commands)
+        found = re.findall(r"cmd LC_BUILD_VERSION\n\s+cmdsize \d+\n\s+platform \S+\n\s+minos (\S+)", commands)
         check(found == [minos], f"{path.name}: minos is {found}, expected {minos}")
         print(f"  {path.name}: {ids[tk]}, LC_RPATH {rpaths}")
 

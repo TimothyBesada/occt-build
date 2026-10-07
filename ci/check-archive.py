@@ -17,7 +17,8 @@ a pass means the libraries work from wherever they are unpacked:
   loading    each library dlopen'ed by absolute path in a fresh process, with
              no library search path set
   smoke      ci/smoke.cpp compiled against the prefix: it meshes a box,
-             writes it as STEP AP203, AP214 and AP242 and reads each back,
+             writes it as STEP AP203, AP214 and AP242 and reads each back with
+             the same topology and volume,
              and catches an OCCT exception as std::exception
 
 Needs Python 3.8+, a C++17 compiler, and otool (macOS) or readelf (Linux).
@@ -45,7 +46,7 @@ TOOLKITS = {
     "TKDESTEP",
 }
 # The libraries the smoke test links directly; the rest load transitively.
-SMOKE_LIBS = ["TKDESTEP", "TKXSBase", "TKMesh", "TKPrim", "TKTopAlgo", "TKBRep", "TKG3d", "TKMath", "TKernel"]
+SMOKE_LIBS = ["TKDESTEP", "TKXSBase", "TKMesh", "TKPrim", "TKTopAlgo", "TKBRep", "TKGeomBase", "TKG3d", "TKMath", "TKernel"]
 # One public header per root toolkit of the set.
 HEADERS = [
     "BRepPrimAPI_MakeBox.hxx",       # TKPrim

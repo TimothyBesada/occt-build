@@ -2,9 +2,11 @@
 // STEP AP203, AP214 and AP242 and reads each back, and checks that an OCCT
 // exception arrives as a std::exception (OCCT 8).
 
+#include <BRepGProp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRep_Tool.hxx>
+#include <GProp_GProps.hxx>
 #include <Interface_Static.hxx>
 #include <Poly_Triangulation.hxx>
 #include <STEPControl_Reader.hxx>
@@ -15,6 +17,7 @@
 #include <TopoDS.hxx>
 #include <gp_Dir.hxx>
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <exception>
@@ -36,7 +39,8 @@ static int count(const TopoDS_Shape& shape, TopAbs_ShapeEnum type)
 }
 
 // Writes the shape as STEP in the given schema, checks the file's schema
-// name, reads it back, and checks the result is one solid with six faces.
+// name, reads it back, and checks the result is one solid with six faces and
+// the same volume, so a unit-scaling regression fails too.
 static int roundTripStep(const TopoDS_Shape& shape, const char* schema, const char* fileSchema)
 {
   STEPControl_Writer writer;
@@ -59,10 +63,15 @@ static int roundTripStep(const TopoDS_Shape& shape, const char* schema, const ch
     return fail("STEP read transferred no roots");
   const TopoDS_Shape read = reader.OneShape();
   const int solids = count(read, TopAbs_SOLID), faces = count(read, TopAbs_FACE);
-  std::printf("STEP %s: %zu bytes, read back %d solid(s), %d faces\n",
-              schema, text.size(), solids, faces);
+  GProp_GProps props;
+  BRepGProp::VolumeProperties(read, props);
+  const double volume = props.Mass();
+  std::printf("STEP %s: %zu bytes, read back %d solid(s), %d faces, volume %.6f\n",
+              schema, text.size(), solids, faces, volume);
   if (solids != 1 || faces != 6)
     return fail("unexpected shape read back from STEP");
+  if (std::fabs(volume - 6000.0) > 1e-6)
+    return fail("the shape read back from STEP has the wrong volume");
   return 0;
 }
 

@@ -7,7 +7,10 @@ Prebuilt [Open CASCADE Technology](https://dev.opencascade.org/) (OCCT) archives
 ## What is built
 
 - **OCCT 8.0.1**: tag `V8_0_1`, commit `b8f597c677811d1f9f4d8a97f5ae2825c0353a42`, fetched with git and checked against that commit.
-- **The 16-toolkit modeling set**: the closure of `TKPrim`, `TKMesh`, `TKBO`, `TKBool`, `TKFillet`, `TKOffset` and `TKFeat`, which is `TKernel`, `TKMath`, `TKG2d`, `TKG3d`, `TKGeomBase`, `TKBRep`, `TKGeomAlgo`, `TKTopAlgo`, `TKShHealing`, `TKPrim`, `TKMesh`, `TKBO`, `TKBool`, `TKFillet`, `TKOffset` and `TKFeat`.
+- **The 27-toolkit modeling and STEP set**: the closure of `TKPrim`, `TKMesh`, `TKBO`, `TKBool`, `TKFillet`, `TKOffset`, `TKFeat` and `TKDESTEP`, which is:
+  - modeling: `TKernel`, `TKMath`, `TKG2d`, `TKG3d`, `TKGeomBase`, `TKBRep`, `TKGeomAlgo`, `TKTopAlgo`, `TKShHealing`, `TKPrim`, `TKMesh`, `TKBO`, `TKBool`, `TKFillet`, `TKOffset` and `TKFeat`;
+  - STEP: `TKDESTEP` (`STEPControl_Reader` and `STEPControl_Writer` for AP203, AP214 and AP242, and `STEPCAFControl` for XDE documents), `TKDE`, `TKXSBase`, `TKXCAF`, `TKCAF`, `TKCDF`, `TKLCAF` and `TKVCAF`;
+  - and `TKV3d`, `TKService` and `TKHLR`, which no STEP code needs but which OCCT links in: `TKDESTEP` links `TKXCAF`, which links `TKVCAF`, `TKV3d` and `TKService`, and `TKV3d` links `TKHLR`. Dropping them would mean patching OCCT. With every `USE_*` off they need no third-party library and no display: on macOS `TKService` links only the system's `objc`, AppKit and IOKit.
 - **No third-party dependencies**: every `USE_*` option off, and no Draw. The libraries depend only on the system's C and C++ runtimes.
 - **Shared libraries, Release**, with `BUILD_RELEASE_DISABLE_EXCEPTIONS=OFF`, so OCCT's range and argument checks stay exceptions.
 - **`-ffp-contract=off`** for C and C++, so the compiler never fuses multiplies and adds. The build fails if any compile command lacks it.
@@ -63,7 +66,7 @@ Needs bash, git, CMake 3.16 or newer, and a C++17 compiler (Xcode's command-line
 - `--work-dir DIR` is where the source is fetched and the build runs, and it is kept afterwards; a clean checkout of the pinned commit there is reused. By default a temporary directory is used and removed.
 - `--jobs N` sets the build's parallelism; it defaults to the number of CPUs.
 
-The script verifies the build before it finishes: every compile command carries `-ffp-contract=off` and none disables exceptions, and the installed libraries are exactly the 16-toolkit set.
+The script verifies the build before it finishes: every compile command carries `-ffp-contract=off` and none disables exceptions, and the installed libraries are exactly the 27-toolkit set.
 
 Two more modes need no compiler:
 
@@ -107,7 +110,7 @@ Every install prefix, from a release or a local build, carries a `manifest.json`
 | `config` | the configuration lines that hash to `config_hash` |
 | `compiler`, `c_compiler` | the C++ and C compilers: CMake's `id` and `version`, and the first line of `--version` as `description` |
 | `flags` | `cflags` and `cxxflags` passed to the compilers, and the `cmake` options passed on this platform |
-| `toolkits` | the 16 toolkits |
+| `toolkits` | the 27 toolkits |
 
 ## CI and publishing a release
 
@@ -116,7 +119,7 @@ Every install prefix, from a release or a local build, carries a `manifest.json`
 - the layout and every field of the manifest, against `build.sh`;
 - install names and rpaths, with `otool -D`/`-L`/`-l` on macOS and `readelf -d` on Linux;
 - that each library loads by absolute path with no library search path set;
-- that a small program ([`ci/smoke.cpp`](ci/smoke.cpp)) builds against the archive, meshes a box, and catches an OCCT exception as `std::exception`.
+- that a small program ([`ci/smoke.cpp`](ci/smoke.cpp)) builds against the archive, meshes a box, writes it as STEP AP203, AP214 and AP242 and reads each back, and catches an OCCT exception as `std::exception`.
 
 To publish a release of the configuration on `main`, either run the workflow from the Actions tab with **release** ticked, or push the tag:
 

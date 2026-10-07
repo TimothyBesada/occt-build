@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Builds the pinned OCCT into an install prefix: the 16-toolkit modeling set,
-# shared, with no third-party dependencies.
+# Builds the pinned OCCT into an install prefix: the 27-toolkit modeling and
+# STEP set, shared, with no third-party dependencies.
 #
 #   ./build.sh --prefix DIR [--work-dir DIR] [--jobs N]
 #   ./build.sh --config
@@ -18,10 +18,15 @@ OCCT_TAG=V8_0_1
 OCCT_COMMIT=b8f597c677811d1f9f4d8a97f5ae2825c0353a42
 OCCT_REPO=https://github.com/Open-Cascade-SAS/OCCT
 
-# The 16-toolkit modeling set: the closure of the roots in
+# The 27-toolkit modeling and STEP set: the closure of the roots in
 # BUILD_ADDITIONAL_TOOLKITS below. The build fails if the install differs.
+#
+# TKDESTEP (STEPControl and STEPCAFControl) links TKXCAF, and TKXCAF links
+# TKVCAF, TKV3d and TKService, and TKV3d links TKHLR. OCCT's CMake builds that
+# whole closure; with every USE_* off none of it needs a third-party library.
 TOOLKITS="TKernel TKMath TKG2d TKG3d TKGeomBase TKBRep TKGeomAlgo TKTopAlgo
-TKShHealing TKPrim TKMesh TKBO TKBool TKFillet TKOffset TKFeat"
+TKShHealing TKPrim TKMesh TKBO TKBool TKFillet TKOffset TKFeat TKHLR TKService
+TKV3d TKCDF TKLCAF TKCAF TKVCAF TKXSBase TKDE TKXCAF TKDESTEP"
 
 # The build configuration. These lines, each followed by a newline, hash to the
 # config hash (the first 16 hex digits of their SHA-256). `cmake.*` lines are
@@ -44,7 +49,7 @@ CONFIG=(
   "cmake.BUILD_MODULE_ApplicationFramework=OFF"
   "cmake.BUILD_MODULE_DataExchange=OFF"
   "cmake.BUILD_MODULE_Draw=OFF"
-  "cmake.BUILD_ADDITIONAL_TOOLKITS=TKPrim;TKMesh;TKBO;TKBool;TKFillet;TKOffset;TKFeat"
+  "cmake.BUILD_ADDITIONAL_TOOLKITS=TKPrim;TKMesh;TKBO;TKBool;TKFillet;TKOffset;TKFeat;TKDESTEP"
   "cmake.BUILD_GTEST=OFF"
   "cmake.BUILD_DOC_Overview=OFF"
   "cmake.BUILD_USE_PCH=OFF"
@@ -237,7 +242,7 @@ check_toolkits() {
   # shellcheck disable=SC2012 # library names are plain
   built=$(ls "$lib" | sed -n "s/^lib\([A-Za-z0-9_]*\)\.$LIB_EXT\$/\1/p" | sort)
   [ "$built" = "$expected" ] ||
-    die "installed toolkits differ from the 16-toolkit set:
+    die "installed toolkits differ from the 27-toolkit set:
 $(diff <(echo "$expected") <(echo "$built") || true)"
 }
 

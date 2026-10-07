@@ -8,7 +8,7 @@ directory first, or an install prefix. Every check runs against that copy, so
 a pass means the libraries work from wherever they are unpacked:
 
   layout     the headers, with Standard_Version.hxx at 8.0.1; exactly the
-             16-toolkit set; the license texts and the build script
+             27-toolkit set; the license texts and the build script
   manifest   every field of manifest.json, against this repo's build.sh, and
              the config hash recomputed from the config lines
   linkage    install names and rpaths (otool on macOS, readelf on Linux): each
@@ -16,8 +16,9 @@ a pass means the libraries work from wherever they are unpacked:
              on nothing outside OCCT but the system's C and C++ runtimes
   loading    each library dlopen'ed by absolute path in a fresh process, with
              no library search path set
-  smoke      ci/smoke.cpp compiled against the prefix: it meshes a box and
-             catches an OCCT exception as std::exception
+  smoke      ci/smoke.cpp compiled against the prefix: it meshes a box,
+             writes it as STEP AP203, AP214 and AP242 and reads each back,
+             and catches an OCCT exception as std::exception
 
 Needs Python 3.8+, a C++17 compiler, and otool (macOS) or readelf (Linux).
 """
@@ -39,10 +40,12 @@ BUILD_SH = REPO / "build.sh"
 TOOLKITS = {
     "TKernel", "TKMath", "TKG2d", "TKG3d", "TKGeomBase", "TKBRep",
     "TKGeomAlgo", "TKTopAlgo", "TKShHealing", "TKPrim", "TKMesh", "TKBO",
-    "TKBool", "TKFillet", "TKOffset", "TKFeat",
+    "TKBool", "TKFillet", "TKOffset", "TKFeat", "TKHLR", "TKService", "TKV3d",
+    "TKCDF", "TKLCAF", "TKCAF", "TKVCAF", "TKXSBase", "TKDE", "TKXCAF",
+    "TKDESTEP",
 }
 # The libraries the smoke test links directly; the rest load transitively.
-SMOKE_LIBS = ["TKMesh", "TKPrim", "TKTopAlgo", "TKBRep", "TKG3d", "TKMath", "TKernel"]
+SMOKE_LIBS = ["TKDESTEP", "TKXSBase", "TKMesh", "TKPrim", "TKTopAlgo", "TKBRep", "TKG3d", "TKMath", "TKernel"]
 # One public header per root toolkit of the set.
 HEADERS = [
     "BRepPrimAPI_MakeBox.hxx",       # TKPrim
@@ -52,6 +55,9 @@ HEADERS = [
     "BRepFilletAPI_MakeFillet.hxx",  # TKFillet
     "BRepOffsetAPI_MakeThickSolid.hxx",  # TKOffset
     "BRepFeat_MakePrism.hxx",        # TKFeat
+    "STEPControl_Reader.hxx",        # TKDESTEP
+    "STEPControl_Writer.hxx",        # TKDESTEP
+    "STEPCAFControl_Reader.hxx",     # TKDESTEP
 ]
 LINUX_SYSTEM_LIBS = {
     "libc.so.6", "libm.so.6", "libstdc++.so.6", "libgcc_s.so.1",
@@ -150,7 +156,7 @@ def check_layout(prefix, ext, values):
         check((include / header).is_file(), f"header {header} is missing")
     real = libraries(prefix / "lib", ext)
     check(set(real) == TOOLKITS,
-          f"libraries differ from the 16-toolkit set: missing {sorted(TOOLKITS - set(real))}, "
+          f"libraries differ from the 27-toolkit set: missing {sorted(TOOLKITS - set(real))}, "
           f"extra {sorted(set(real) - TOOLKITS)}")
     for name in ("LICENSE_LGPL_21.txt", "OCCT_LGPL_EXCEPTION.txt"):
         check(any(prefix.rglob(name)), f"{name} is missing")
@@ -188,7 +194,7 @@ def check_manifest(prefix, os_name, target, values, config, archive):
     for key in ("cflags", "cxxflags"):
         check("-ffp-contract=off" in str(get("flags", key)), f"flags.{key} lacks -ffp-contract=off")
     check(get("flags", "cmake") == options, "flags.cmake differs from the config's options")
-    check(set(get("toolkits") or []) == TOOLKITS, "toolkits differ from the 16-toolkit set")
+    check(set(get("toolkits") or []) == TOOLKITS, "toolkits differ from the 27-toolkit set")
     if archive:
         name = f"occt-{values['VERSION']}-{config_hash}-{target}.tar.gz"
         check(archive.name == name, f"the archive is named {archive.name}, expected {name}")
